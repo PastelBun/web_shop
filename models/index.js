@@ -1,0 +1,33 @@
+const path=require('path');
+const fs=require('fs');
+const sequelize=require('../util/db')
+const models={};
+
+module.exports=(()=>{
+    if(!Object.keys(models).length){
+        const files= fs.readdirSync(__dirname);
+        const excludedfiles=['.','..','index.js'];
+    
+        for (const fileName of files){
+            if(!excludedfiles.includes(fileName)&&(path.extname(fileName)=== '.js')) {
+                const modelFile=require(path.join(__dirname, fileName));
+                models[modelFile.getTableName()]=modelFile;
+            }
+        }
+        Object
+        .values(models)
+        .forEach(model=>{
+            if(typeof model.associate==='function'){
+                model.associate(models);
+            }
+        });
+        models.sequelize=sequelize
+    }
+
+    models.User=require('./user')
+    models.Product=require('./product')
+
+    models.User.hasMany(models.Product)
+    models.Product.belongsTo(models.User, {constraints:true, onDelete:'CASCADE'})
+    return models;
+})();
