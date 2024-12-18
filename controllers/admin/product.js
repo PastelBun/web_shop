@@ -2,7 +2,6 @@ const Product=require('../../models/product')
 
 class adminController{
     async addProduct(req,res){
-        console.log(req.body);  // Check if the request body is correct
         const product=await Product.create({
             title: req.body.title,
             price:req.body.price,
@@ -18,7 +17,6 @@ class adminController{
 
     async getAllProducts(req, res){
         const products=await Product.findAll()
-        console.log(products)
         res.status(201).json({
             products:products
         })
@@ -29,7 +27,6 @@ class adminController{
             where: {
                 id:req.params.id
             }})
-        console.log(product)
         res.status(201).json({
             product:product
         })
@@ -52,7 +49,6 @@ class adminController{
             where: { id:id },
         })
         .then(product=>{
-            console.log(product)
             return res.status(200).json({ message: "Product updated"});
         })
         .catch (error=>{
