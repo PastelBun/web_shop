@@ -1,7 +1,6 @@
 const Product=require('../models/product')
-const Cart=require('../models/cart')
-const { where } = require('sequelize')
 const CartItem = require('../models/cart-item')
+const OrderItem = require('../models/order-item')
 
 class shopController{
     async getAllProducts(req, res){
@@ -60,16 +59,30 @@ class shopController{
             message:'Product is removed from cart'
         }) 
     }
-    /*
-    async changeQuantity(req,res){
-        await CartItem.save({
-            quantity:req.body.quantity,
-            where:{
-                cartId:req.body.cartId,
-                productId: req.body.productId
-            }
-        })
-    }*/
+    
+    async order(req,res){
+        itemsInCart=Cart.getCart();
+        if (itemsInCart>0){
+            await order.create({
+            userId: Cart.userId,
+            })
+            itemsInCart.array.forEach(element => {
+                OrderItem.create({
+                    userId:CartItem.userId,
+                    cartId:req.params.id,
+                    quantity:CartItem.quantity
+                }) 
+                CartItem.removeFromCart
+            });
+            res.status(201).json({
+                message:'Order has been created'
+            })   
+        }
+        else {res.status(500).json({
+            message:'Cart is empty'
+        })}
+        
+    }
 }
 
 module.exports=new shopController()
