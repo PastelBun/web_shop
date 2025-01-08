@@ -41,5 +41,7 @@ module.exports=(()=>{
     models.Order.belongsToMany(models.Product,{through: models.OrderItem})
     models.User.hasMany(models.Order)
     models.Order.belongsTo(models.User)
+    models.CartItem.belongsTo(models.Cart);
+
     return models;
 })();

@@ -1,6 +1,8 @@
 const Product=require('../models/product')
 const CartItem = require('../models/cart-item')
 const OrderItem = require('../models/order-item')
+const Cart=require("../models/cart")
+const Order=require('../models/order')
 
 class shopController{
     async getAllProducts(req, res){
@@ -37,16 +39,16 @@ class shopController{
             id: existingCartItem.id
         });}
         else{
-        await CartItem.create({
-            productId: req.params.id,
-            quantity:req.body.quantity,
-            cartId:req.body.cartId
+            const newCartItem = await CartItem.create({
+                productId: req.params.id,
+                quantity: req.body.quantity,
+                cartId: req.body.cartId
+            });
+            return res.status(201).json({
+                message: 'Product is added to cart',
+                id: newCartItem.id
         })}
-        res.status(201).json({
-            message:'Product is added to cart',
-            id:CartItem.id
-        }) 
-    }
+    }    
     async removeFromCart(req,res){
         await CartItem.destroy({
             where: {
@@ -60,29 +62,48 @@ class shopController{
         }) 
     }
     
-    async order(req,res){
-        itemsInCart=Cart.getCart();
-        if (itemsInCart>0){
-            await order.create({
-            userId: Cart.userId,
-            })
-            itemsInCart.array.forEach(element => {
-                OrderItem.create({
-                    userId:CartItem.userId,
-                    cartId:req.params.id,
-                    quantity:CartItem.quantity
-                }) 
-                CartItem.removeFromCart
-            });
-            res.status(201).json({
+    
+    async order(req, res) {
+        const user = req.user; 
+        const userCart=await user.getCart();
+        const cartProducts=await userCart.getProducts();
+        if (cartProducts.length>0){
+            const order=await Order.create({userId:user.id});
+            for (let cartItem of cartProducts) {
+                await OrderItem.create({
+                    orderId:order.id,
+                    productId:cartItem.productId,
+                    quantity:cartItem.quantity
+                })
+            }
+            res.status(200).json({
                 message:'Order has been created'
-            })   
+            })
+        } else {
+            res.status(500).json({
+                message:'Cart is empty'
+            })
         }
-        else {res.status(500).json({
-            message:'Cart is empty'
-        })}
-        
     }
-}
+            
+    
+    async getOrders(req, res) {
+        
+            const userId =  req.user.id; 
 
+            const orders = await Order.findAll({
+                where: { userId: userId },
+                include: [
+                    {
+                        model: Product,
+                        through: { attributes: ['productId'] } 
+                    }
+                ]
+            });
+            res.status(200).json({
+                orders: orders
+            });
+        } 
+
+}
 module.exports=new shopController()

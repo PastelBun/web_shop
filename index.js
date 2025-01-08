@@ -27,9 +27,15 @@ const productRoutes=require('./routes/product')
 app.use(productRoutes)
 const shopRoutes=require('./routes/shop')
 app.use(shopRoutes)
-
+/*
+sequelize.query('DROP TABLE IF EXISTS `cart-items`;');
+sequelize.query('DROP TABLE IF EXISTS `orders`;');
+sequelize.query('DROP TABLE IF EXISTS `orderItems`;');
+sequelize.query('DROP TABLE IF EXISTS `products`;');
+*/
 sequelize 
-    .sync({force:true})
+
+    .sync()
     .then(()=>{
     return models.User.findByPk(1)
     }) 
