@@ -64,27 +64,52 @@ class shopController{
     
     
     async order(req, res) {
-        const user = req.user; 
-        const userCart=await user.getCart();
-        const cartProducts=await userCart.getProducts();
-        if (cartProducts.length>0){
-            const order=await Order.create({userId:user.id});
-            for (let cartItem of cartProducts) {
-                await OrderItem.create({
-                    orderId:order.id,
-                    productId:cartItem.productId,
-                    quantity:cartItem.quantity
-                })
+        const user = req.user|| req.body.user; // Get the authenticated user
+        try {
+            // Get the cart of the user
+            const userCart = await user.getCart();
+            const cartProducts = await userCart.getProducts();
+    
+            // Check if the cart is empty
+            if (cartProducts.length > 0) {
+                // Create a new order
+                const order = await Order.create({ userId: user.id });
+    
+                for (let cartItem of cartProducts) {
+                    // Create OrderItems based on the cart products
+                    await OrderItem.create({
+                        orderId: order.id,
+                        productId: cartItem.productId,
+                        quantity: cartItem.quantity
+                    });
+    
+                    // Destroy the cart item after it's added to the order
+                    await CartItem.destroy({
+                        where: {
+                            id: cartItem.id // Remove the cart item by its ID
+                        }
+                    });
+                }
+    
+                // Respond with a success message
+                res.status(200).json({
+                    message: 'Order has been created'
+                });
+            } else {
+                // Cart is empty
+                res.status(400).json({
+                    message: 'Cart is empty'
+                });
             }
-            res.status(200).json({
-                message:'Order has been created'
-            })
-        } else {
+        } catch (error) {
+            console.error(error);
             res.status(500).json({
-                message:'Cart is empty'
-            })
+                message: 'Something went wrong',
+                error: error.message
+            });
         }
     }
+    
             
     
     async getOrders(req, res) {
@@ -96,7 +121,7 @@ class shopController{
                 include: [
                     {
                         model: Product,
-                        through: { attributes: ['productId'] } 
+                        through: { attributes: ['quantity'] } 
                     }
                 ]
             });

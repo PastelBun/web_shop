@@ -34,8 +34,7 @@ sequelize.query('DROP TABLE IF EXISTS `orderItems`;');
 sequelize.query('DROP TABLE IF EXISTS `products`;');
 */
 sequelize 
-
-    .sync()
+    .sync(force=true)
     .then(()=>{
     return models.User.findByPk(1)
     }) 
