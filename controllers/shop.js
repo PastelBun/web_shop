@@ -12,13 +12,26 @@ class shopController{
         })
     }
 
-    async getCart(req, res){
+    /*async getCart(req, res){
         const userCart=await req.user.getCart()
         const cartProducts=await userCart.getProducts()
         res.status(201).json({
             products:cartProducts
         })
-    }
+    }*/
+        async getCart(req, res) {
+            const userCart = await req.user.getCart();
+            const cartProducts = await userCart.getProducts({
+                through: {
+                    attributes: ['quantity']  // Ensure quantity from CartItem is included
+                }
+            });
+        
+            res.status(201).json({
+                products: cartProducts
+            });
+        }
+        
     async addToCart(req,res){
         const cartId=req.body.cartId
         const productId= req.params.id
@@ -64,11 +77,15 @@ class shopController{
     
     
     async order(req, res) {
-        const user = req.user|| req.body.user; // Get the authenticated user
+        const user = req.user || req.body.user; // Get the authenticated user
         try {
             // Get the cart of the user
             const userCart = await user.getCart();
-            const cartProducts = await userCart.getProducts();
+            const cartProducts = await userCart.getProducts({
+                through: {
+                    attributes: ['quantity']  // Include quantity from CartItem
+                }
+            });
     
             // Check if the cart is empty
             if (cartProducts.length > 0) {
@@ -76,24 +93,31 @@ class shopController{
                 const order = await Order.create({ userId: user.id });
     
                 for (let cartItem of cartProducts) {
-                    // Create OrderItems based on the cart products
-                    await OrderItem.create({
-                        orderId: order.id,
-                        productId: cartItem.productId,
-                        quantity: cartItem.quantity
-                    });
+                    console.log(cartItem);
+                    const quantity = cartItem.cartItem.quantity; // Access the quantity correctly
+                    if (quantity) {
+                        // Add product and quantity to the order
+                        await OrderItem.create({
+                            orderId: order.id,
+                            productId: cartItem.productId,
+                            quantity: quantity  // Add the quantity from CartItem
+                        });
     
-                    // Destroy the cart item after it's added to the order
-                    await CartItem.destroy({
-                        where: {
-                            id: cartItem.id // Remove the cart item by its ID
-                        }
-                    });
+                        // After creating the OrderItem, remove the cart item
+                        await CartItem.destroy({
+                            where: {
+                                id: cartItem.cartItem.id // Use the CartItem ID to destroy it
+                            }
+                        });
+                    } else {
+                        // If no quantity is found, handle it appropriately (optional)
+                        console.error(`No quantity found for product: ${cartItem.productId}`);
+                    }
                 }
     
                 // Respond with a success message
                 res.status(200).json({
-                    message: 'Order has been created'
+                    message: 'Order has been created successfully.'
                 });
             } else {
                 // Cart is empty
@@ -110,8 +134,7 @@ class shopController{
         }
     }
     
-            
-    
+                
     async getOrders(req, res) {
         
             const userId =  req.user.id; 
