@@ -94,12 +94,14 @@ class shopController{
     
                 for (let cartItem of cartProducts) {
                     console.log(cartItem);
+                    console.log('CartItem Product ID:', cartItem.productId);
+
                     const quantity = cartItem.cartItem.quantity; // Access the quantity correctly
                     if (quantity) {
                         // Add product and quantity to the order
                         await OrderItem.create({
                             orderId: order.id,
-                            productId: cartItem.productId,
+                            productId: cartItem.cartItem.productId,
                             quantity: quantity  // Add the quantity from CartItem
                         });
     

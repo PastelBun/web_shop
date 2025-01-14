@@ -42,11 +42,15 @@ module.exports=(()=>{
     models.Order.belongsToMany(models.Product, { through: models.OrderItem });
     models.Product.belongsToMany(models.Order, { through: models.OrderItem });
     models.CartItem.belongsTo(models.Cart);
-    models.CartItem.belongsTo(models.Product);
+    models.CartItem.belongsTo(models.Product, { foreignKey: 'productId' });
     models.OrderItem.belongsTo(models.Order);
     models.OrderItem.belongsTo(models.Product);
-    models.Order.hasMany(models.OrderItem);
-    models.Product.hasMany(models.OrderItem);
+    models.Order.hasMany(models.OrderItem, { foreignKey: 'orderId' });
+    models.Product.hasMany(models.OrderItem, { foreignKey: 'productId' });
+    models.Cart.hasMany(models.CartItem, { foreignKey: 'cartId' });
+    models.CartItem.belongsTo(models.Cart, { foreignKey: 'cartId' });
+    models.OrderItem.belongsTo(models.Product, { foreignKey: 'productId' });
+    models.OrderItem.belongsTo(models.Order, { foreignKey: 'orderId' });
 
     return models;
 })();
